@@ -1,11 +1,11 @@
 // 以下仅供内部使用
-import * as server from '../../servers.js';
-const DEBUG = true;
-const API_URL = server.baseUrl() + "/api/locksdk/";
+// import * as server from '../../servers.js';
+// const DEBUG = true;
+// const API_URL = server.baseUrl() + "/api/locksdk/";
 
 // 接入商请使用下面配置
-// const DEBUG = false;
-// const API_URL = "https://lock.wangjile.cn/api/locksdk/";
+const DEBUG = true;
+const API_URL = "https://lock.wangjile.cn/api/locksdk/";
 
 const SPLIT_HEAD = ["a8", "a7", "a6"]
 class BlueV4Adapter {
@@ -207,11 +207,6 @@ class BlueV4Adapter {
       this.timer = setTimeout(() => this._releaseBlock(), 6000);
       DEBUG && console.log('存储开门指令：' + this.open_command_id)
     }
-  }
-
-  send_custom_command(cmds) {
-    this.send_buffer_commands = this.send_buffer_commands.concat(cmds.split(';'));
-    this._send_buffer()
   }
 
   _send_buffer() {

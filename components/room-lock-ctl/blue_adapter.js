@@ -1,11 +1,11 @@
 // 以下仅供内部使用
-import * as server from '../../servers.js';
-const DEBUG = true;
-const API_URL = server.baseUrl() + "/api/locksdk/";
+// import * as server from '../../servers.js';
+// const DEBUG = true;
+// const API_URL = server.baseUrl() + "/api/locksdk/";
 
 // 接入商请使用下面配置
-// const DEBUG = false;
-// const API_URL = "https://lock.wangjile.cn/api/locksdk/";
+const DEBUG = true;
+const API_URL = "https://lock.wangjile.cn/api/locksdk/";
 
 class BlueAdapter {
   constructor(params_id, version, token, connect_callback, _auto_retry = true) {
@@ -141,12 +141,6 @@ class BlueAdapter {
       }
     })
   }
-
-  send_custom_command(cmds) {
-    this.send_buffer_commands = this.send_buffer_commands.concat(cmds.split(';'));
-    this._send_buffer()
-  }
-
 
   _send_buffer() {
     let buffer = this.send_buffer_commands.shift()
@@ -320,6 +314,7 @@ class BlueAdapter {
         if (!device.name && !device.localName) {
           return
         }
+        console.log(device.name, '----------------')
         if (!(device.name.slice(0, 5) == "MESH-") && !(device.name.slice(0, 2) == "FG")) {
           return
         }
