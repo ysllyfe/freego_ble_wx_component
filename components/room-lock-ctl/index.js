@@ -250,6 +250,10 @@ Component({
       wx.showLoading({
         title: '开锁中...'
       })
+      if (this.data.init_blue) {
+        this.forceOpenDoor()
+        return
+      }
       setTimeout(function () {
         wx.hideLoading()
       }, 2000)
@@ -268,7 +272,7 @@ Component({
           showHttpOnline: false,
         }, () => {
           if (that.data.init_blue) {
-            that.forceOpen()
+            that.forceOpenDoor()
           }
         })
       } else {
