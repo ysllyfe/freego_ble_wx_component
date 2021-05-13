@@ -4,7 +4,7 @@
 // const API_URL = server.baseUrl() + "/api/locksdk/";
 
 // 接入商请使用下面配置
-const DEBUG = true;
+const DEBUG = false;
 const API_URL = "https://lock.wangjile.cn/api/locksdk/";
 
 const SPLIT_HEAD = ["a8", "a7", "a6"]
@@ -497,6 +497,8 @@ class BlueV4Adapter {
                     });
                   }
                   if (item.properties.notify == true) {
+                    DEBUG && console.log('service.uuid:', service.uuid)
+                    DEBUG && console.log('item.uuid:', item.uuid)
                     this.notifyBle(service.uuid, item.uuid);
                   }
                 })
@@ -527,6 +529,8 @@ class BlueV4Adapter {
       characteristicId: uuid,
       success: (res) => {
         this.onBleCharacterChange()
+        DEBUG && console.log(service_id)
+        DEBUG && console.log(uuid)
         DEBUG && console.log('Notify特征订阅成功！')
       },
       fail: (res) => {

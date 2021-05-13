@@ -83,6 +83,16 @@ Component({
 
   pageLifetimes: {
     show: function () {
+      console.log('-------component----pageLifetimes----')
+      if (app.globalData.blueAdapter) {
+        if (app.globalData.blueAdapter.connectStatus()) {
+          this.setData({ init_blue: true })
+        } else {
+          this.setData({ init_blue: false })
+        }
+      } else {
+        this.setData({ init_blue: false })
+      }
       wx.onAccelerometerChange((r) => {
         this.shakeCallback(r)
       })
