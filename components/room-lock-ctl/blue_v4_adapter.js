@@ -7,7 +7,7 @@
 const DEBUG = false;
 const API_URL = "https://lock.wangjile.cn/api/locksdk/";
 
-const SPLIT_HEAD = ["a8", "a7", "a6"]
+const SPLIT_HEAD = ["a8", "a7", "a6", "bf"]
 class BlueV4Adapter {
 
   constructor(params_id, token, connect_callback, auto_command = true, timeout = 15) {
@@ -29,7 +29,6 @@ class BlueV4Adapter {
     this.block_by_open_door_command = false
 
     this._cdwait = false
-    this._cdpackage = 0
     this._cddata = []
     this._cdcharacteristicId = ""
     this.timeStamp = Math.floor(Date.now() / 1000);
@@ -203,8 +202,8 @@ class BlueV4Adapter {
     if (command.slice(0, 2) == "FA") {
       this.open_command_id = command.slice(2, 10).toLowerCase()
       // 锁定其它的指令
-      // this.block_by_open_door_command = true
-      this.timer = setTimeout(() => this._releaseBlock(), 6000);
+      this.block_by_open_door_command = true
+      this.timer = setTimeout(() => this._releaseBlock(), 1000);
       DEBUG && console.log('存储开门指令：' + this.open_command_id)
     }
   }
@@ -378,6 +377,13 @@ class BlueV4Adapter {
     wx.removeStorageSync(this.param_id)
     this.connectBluetooth();
   }
+
+  send_custom_command(cmds) {
+    this.send_buffer_commands = this.send_buffer_commands.concat(cmds.split(';'));
+    this._send_buffer()
+  }
+
+
 
   sendConnectCommand() {
     setTimeout(() => {
@@ -621,10 +627,9 @@ class BlueV4Adapter {
   }
 
   dealWithSplitPackage(res, value) {
-    if (this._cdwait == false && SPLIT_HEAD.includes(value.slice(0, 2))) {
+    if (this._cdwait == false) {
       //收到需等待第一包
       this._cdwait = true
-      this._cdpackage = 1
       this._cdcharacteristicId = res.characteristicId
       this._cddata = [value]
       return
@@ -633,12 +638,10 @@ class BlueV4Adapter {
       if (this._cddata.includes(value)) {
         return
       }
-      this._cdpackage = this._cdpackage + 1
       this._cddata.push(value)
-      if ((value.slice(0, 2).toUpperCase() == 'A6' && this._cdpackage == 4) || (value.slice(0, 2).toUpperCase() != 'A6' && this._cdpackage == 3)) {
+      if (value.slice(2, 4) == value.slice(4, 6)) {
         this.saveCdData()
         this._cdwait = false
-        this._cdpackage = 0
         this._cddata = []
         this._cdcharacteristicId = ""
         DEBUG && console.log('logs', '收到分包数据，重置分包接收器状态，并回复')
@@ -654,6 +657,7 @@ class BlueV4Adapter {
     this._saveToDb(cmd + new_data.join(""));
   }
   dealWithV44(res) {
+    DEBUG && console.log(this.block_by_open_door_command, "<block_by_open_door_command-----------------------")
     let value = this._ab2hext(res.value);
 
     DEBUG && console.log(`${res.characteristicId}收到回复${value}`)
@@ -675,9 +679,34 @@ class BlueV4Adapter {
         return
       }
     }
+    if (value.slice(0, 2) == "a0") {
+      if (value.slice(0, 4) == "a0fa" && value.slice(-2) != '01') {
+        //响应aafa开门指令，但是执行结果不为成功，则释放锁定
+        this._releaseBlock()
+      }
+      if (value.slice(-2) == "ea") {
+        // 设备未激活，向线上请求激活参数
+        this.need_active && this.reActive()
+        return
+      }
+    }
     if (value.slice(0, 2) == "b5") {
       // 20包一删除，回复B5
       this.writeBle(this._hex2ab(value))
+    }
+    if (value.slice(0, 2) == "9b" && value.slice(16, 28) != 'ffffffffffff') {
+      // 判断是不是物理电机关闭
+      if (value.slice(16, 28) == '010100000007') {
+        this._releaseBlock()
+      }
+      if (value.slice(16, 28) == "010100000006") {
+        // 电机开启
+        DEBUG && console.log("block_by_open_door_command")
+        DEBUG && console.log(this.block_by_open_door_command)
+        this.block_by_open_door_command && this.connect_callback('open_success')
+      }
+    } else {
+      this._send_buffer()
     }
     if (value.slice(0, 2) == "a5" && value.slice(16, 28) != 'ffffffffffff') {
       let a5_id = value.slice(2, 8)
@@ -689,7 +718,9 @@ class BlueV4Adapter {
       }
       if (value.slice(16, 28) == "010100000006") {
         // 电机开启
-        this.connect_callback('open_success')
+        DEBUG && console.log("block_by_open_door_command")
+        DEBUG && console.log(this.block_by_open_door_command)
+        this.block_by_open_door_command && this.connect_callback('open_success')
       }
     } else {
       this._send_buffer()
