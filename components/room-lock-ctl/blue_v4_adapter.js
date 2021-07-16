@@ -654,10 +654,13 @@ class BlueV4Adapter {
     var new_data = this._cddata.map(item => {
       return item.slice(6)
     })
-    this._saveToDb(cmd + new_data.join(""));
+    if (cmd == "bf") {
+      this._saveToDb(new_data.join(""));
+    } else {
+      this._saveToDb(cmd + new_data.join(""));
+    }
   }
   dealWithV44(res) {
-    DEBUG && console.log(this.block_by_open_door_command, "<block_by_open_door_command-----------------------")
     let value = this._ab2hext(res.value);
 
     DEBUG && console.log(`${res.characteristicId}收到回复${value}`)
@@ -680,11 +683,11 @@ class BlueV4Adapter {
       }
     }
     if (value.slice(0, 2) == "a0") {
-      if (value.slice(0, 4) == "a0fa" && value.slice(-2) != '01') {
+      if (value.slice(0, 4) == "a0fa" && value.slice(32, 34) != '01') {
         //响应aafa开门指令，但是执行结果不为成功，则释放锁定
         this._releaseBlock()
       }
-      if (value.slice(-2) == "ea") {
+      if (value.slice(32, 34) == "ea") {
         // 设备未激活，向线上请求激活参数
         this.need_active && this.reActive()
         return
@@ -701,12 +704,8 @@ class BlueV4Adapter {
       }
       if (value.slice(16, 28) == "010100000006") {
         // 电机开启
-        DEBUG && console.log("block_by_open_door_command")
-        DEBUG && console.log(this.block_by_open_door_command)
         this.block_by_open_door_command && this.connect_callback('open_success')
       }
-    } else {
-      this._send_buffer()
     }
     if (value.slice(0, 2) == "a5" && value.slice(16, 28) != 'ffffffffffff') {
       let a5_id = value.slice(2, 8)
@@ -718,13 +717,10 @@ class BlueV4Adapter {
       }
       if (value.slice(16, 28) == "010100000006") {
         // 电机开启
-        DEBUG && console.log("block_by_open_door_command")
-        DEBUG && console.log(this.block_by_open_door_command)
         this.block_by_open_door_command && this.connect_callback('open_success')
       }
-    } else {
-      this._send_buffer()
     }
+    this._send_buffer()
   }
 }
 
