@@ -4,7 +4,7 @@
 // const API_URL = server.baseUrl() + "/api/locksdk/";
 
 // 接入商请使用下面配置
-const DEBUG = true;
+const DEBUG = false;
 const API_URL = "https://lock.wangjile.cn/api/locksdk/";
 
 class BlueAdapter {
@@ -141,6 +141,12 @@ class BlueAdapter {
       }
     })
   }
+
+  send_custom_command(cmds) {
+    this.send_buffer_commands = this.send_buffer_commands.concat(cmds.split(';'));
+    this._send_buffer()
+  }
+
 
   _send_buffer() {
     let buffer = this.send_buffer_commands.shift()
@@ -314,13 +320,10 @@ class BlueAdapter {
         if (!device.name && !device.localName) {
           return
         }
-        console.log(device.name, '----------------')
         if (!(device.name.slice(0, 5) == "MESH-") && !(device.name.slice(0, 2) == "FG")) {
           return
         }
         this._sendEvent('found_other_device');
-        console.log("找到设备---", device.name)
-        console.log("待连接设备---", this.param_id)
         let result = this._ab2hext(device.advertisData)
         // 搜索到设备进行上报
         this.reportFoundEvent(result)
@@ -342,10 +345,6 @@ class BlueAdapter {
         }
       })
     })
-  }
-  preCommand() {
-    this.send_ble('std_time');
-    this.need_record();
   }
   sendConnectCommand() {
     setTimeout(() => {
@@ -442,7 +441,6 @@ class BlueAdapter {
                   this.notifyBle(service.uuid, item.uuid);
                 }
               })
-              this.preCommand()
             },
             fail: (res) => {
               DEBUG && console.log('logs', JSON.stringify(res));

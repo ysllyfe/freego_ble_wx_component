@@ -229,7 +229,6 @@ class BlueV4Adapter {
       this.writeBle(this._hex2ab(buffer))
     } else {
       this.connect_callback && this.connect_callback("无内容，不再发送！");
-      DEBUG && console.log("无内容，不再发送！")
     }
   }
 
@@ -249,6 +248,9 @@ class BlueV4Adapter {
       return
     }
     this.send_ble("publish_records")
+    setTimeout(() => {
+      this.send_ble("need_record")
+    }, 6000)
   }
 
   set_commands(commands) {
@@ -321,13 +323,14 @@ class BlueV4Adapter {
   startBluetoothDevicesDiscovery() {
     this._ble_discover_timer = setTimeout(() => {
       this.blue_tooth_discovery = false
-      this._sendEvent('not_found_device')
+      !this.connected && this._sendEvent('not_found_device')
       this._sendEvent('stop_bluetooth_devices_discovery')
       wx.stopBluetoothDevicesDiscovery()
     }, 10000)
     wx.startBluetoothDevicesDiscovery({
       services: [],
       allowDuplicatesKey: true, //是否允许重复上报同一设备, 如果允许重复上报，则onDeviceFound 方法会多次上报同一设备，但是 RSSI(信号) 值会有不同
+      powerLevel: 'high',
       success: (res) => {
         console.log('开始扫描...')
         this._sendEvent('start_bluetooth_devices_discovery');
@@ -556,7 +559,6 @@ class BlueV4Adapter {
   }
 
   dealWithValueChange(res) {
-    console.log('取得回包------', res)
     this.notifyCallback && this.notifyCallback(res)
     this.dealWithV44(res)
   }

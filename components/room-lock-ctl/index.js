@@ -121,14 +121,17 @@ Component({
         })
         if (app.globalData.blueAdapter) {
           if (_room.deviceId !== app.globalData.blueAdapter.getParamId()) {
+            console.log('---------不同蓝牙')
             app.globalData.blueAdapter.release()
             app.globalData.blueAdapter = null
             setTimeout(() => {
               this.initBluetooth(_room)
             }, 100)
-          } else if (app.globalData.blueAdapter.connect_ble) {
+          } else if (app.globalData.blueAdapter.connectStatus()) {
+            console.log('---------已连接蓝牙')
             this.alreadyConnect()
           } else {
+            console.log('---------初始化蓝牙')
             this.initBluetooth(_room)
           }
         } else {
@@ -335,8 +338,7 @@ Component({
       app.globalData.blueAdapter.openDoor();
     }),
     blueCallback: function (code) {
-      console.log('收到回调信息---------------');
-      console.log(code);
+      console.log("callback:", code);
       this.triggerEvent('blecallback', { code: code })
       switch (code) {
         case "start_bluetooth_devices_discovery":

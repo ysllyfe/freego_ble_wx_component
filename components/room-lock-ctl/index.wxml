@@ -35,16 +35,12 @@
       </view>
       <view class="operate">
         <view bindtap='fingerOpen'>
-          <image src="/images/finger.png"></image>
+          <image src="./images/finger.png"></image>
           <view>指纹开锁</view>
         </view>
         <view bindtap='toggleOfflinePwd' wx:if="{{currentRoomData.hasPasswd}}">
-          <image src="/images/time.png"></image>
+          <image src="./images/time.png"></image>
           <view>时钟密码</view>
-        </view>
-        <view bindtap='forceOpenDoor'>
-          <image src="/images/alarm.png"></image>
-          紧急开锁
         </view>
       </view>
       <view wx:if="{{show_pwd}}" class="border-top">
