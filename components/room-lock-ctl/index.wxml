@@ -45,10 +45,10 @@
       </view>
       <view wx:if="{{show_pwd}}" class="border-top">
         <view class="ctn">
-          <view class="ble_tit">门锁输入密码开锁(60秒有效)</view>
           <view class="password">
             <view class="time-char">*</view>
             <view class="time-char" wx:for="{{passwordChars}}" wx:key="index">{{item}}</view>
+            <view class="time-char">#</view>
           </view>
         </view>
       </view>
@@ -60,6 +60,10 @@
         <!-- 有键盘 -->
         <block wx:if="{{currentRoomData.hasPasswd}}">
           <view class="panel">
+            <view class="question_desc" bindtap="showBleQuestion">
+              <image class="question" src="./images/question.png" />
+              <view>怎么打开蓝牙</view>
+            </view>
             <view class="blue_msg">
               <view class="iconfont icon-warning"></view>
               <view>{{blue_msg}}</view>
@@ -69,6 +73,7 @@
               <view class="password">
                 <view class="time-char">*</view>
                 <view class="time-char" wx:for="{{passwordChars}}" wx:key="index">{{item}}</view>
+                <view class="time-char">#</view>
               </view>
             </view>
           </view>
@@ -88,5 +93,14 @@
         </view>
       </block>
     </block>
+  </view>
+  <view wx:if="{{ble_question}}">
+    <view class="android" wx:if="{{platform == 'android'}}">
+      <image class="android_img" mode="aspectFit" src="https://img.wangjile.cn/mkcards/a.png" />
+    </view>
+    <view class="ios" wx:if="{{platform == 'ios'}}">
+      <image class="ios_img" mode="aspectFit" src="https://img.wangjile.cn/mkcards/ios-1.png" />
+      <image class="ios_img" mode="aspectFit" src="https://img.wangjile.cn/mkcards/ios-2.png" />
+    </view>
   </view>
 </view>

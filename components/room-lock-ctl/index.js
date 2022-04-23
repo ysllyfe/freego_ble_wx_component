@@ -59,14 +59,18 @@ Component({
     show_progress: true,
     current_room_id: 0,
     httpOnline: false,
-    showHttpOnline: false
+    showHttpOnline: false,
+    ble_question: false
   },
 
   lifetimes: {
     // 生命周期函数，可以为函数，或一个在methods段中定义的方法名
     attached: function () {
       console.log('生命周期--------attached--------------')
-      this.setData({ volume: wx.getStorageSync(VOLUME_KEY) || "1" })
+      var sysinfo = wx.getSystemInfoSync()
+      console.log(sysinfo.platform)
+
+      this.setData({ volume: wx.getStorageSync(VOLUME_KEY) || "1", platform: sysinfo.platform })
       wx.onAccelerometerChange((r) => {
         this.shakeCallback(r)
       })
@@ -151,6 +155,11 @@ Component({
     chooseHttpOpen: function () {
       this.setData({
         showHttpOnline: true
+      })
+    },
+    showBleQuestion: function () {
+      this.setData({
+        ble_question: !this.data.ble_question
       })
     },
     chooseBleOpen: function () {
@@ -254,7 +263,7 @@ Component({
         title: '开锁中...'
       })
       if (this.data.init_blue) {
-        this.forceOpenDoor()
+        this.open()
         return
       }
       setTimeout(function () {
@@ -275,7 +284,7 @@ Component({
           showHttpOnline: false,
         }, () => {
           if (that.data.init_blue) {
-            that.forceOpenDoor()
+            that.open()
           }
         })
       } else {

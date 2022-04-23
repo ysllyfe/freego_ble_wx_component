@@ -40,7 +40,6 @@ class BlueV4Adapter {
 
     this.activev20 = false;
     this.try_to_connect_ble = false;
-    this.connectBluetooth()
     this.systemInfo = wx.getSystemInfoSync()
   }
 
@@ -150,6 +149,7 @@ class BlueV4Adapter {
     DEBUG && console.log("断开时蓝牙连接状态：", this.connected);
     this.timerRelease()
     this.connect_callback = null;
+    this._need_record_timer && clearTimeout(this._need_record_timer)
     if (this.blue_tooth_discovery == true) {
       wx.stopBluetoothDevicesDiscovery()
     }
@@ -248,7 +248,7 @@ class BlueV4Adapter {
       return
     }
     this.send_ble("publish_records")
-    setTimeout(() => {
+    this._need_record_timer = setTimeout(() => {
       this.send_ble("need_record")
     }, 6000)
   }
@@ -549,6 +549,7 @@ class BlueV4Adapter {
   }
 
   reActive() {
+    this.send_buffer_commands = []
     this.send_ble("reactive")
   }
 
@@ -664,6 +665,7 @@ class BlueV4Adapter {
   }
   dealWithV44(res) {
     let value = this._ab2hext(res.value);
+    let cmd = value.slice(0, 2)
 
     DEBUG && console.log(`${res.characteristicId}收到回复${value}`)
 
@@ -673,21 +675,14 @@ class BlueV4Adapter {
     }
     this._saveToDb(value);
 
-    if (value.slice(0, 2) == "aa") {
-      if (value.slice(0, 4) == "aafa" && value.slice(-4, -2) != '01') {
+    if (cmd == "aa" || cmd == "a0") {
+      let sub_cmd = value.slice(2, 4)
+      if (sub_cmd == "fa" && value.slice(32, 34) != '01') {
         //响应aafa开门指令，但是执行结果不为成功，则释放锁定
         this._releaseBlock()
       }
-      if (value.slice(-4, -2) == "ea") {
-        // 设备未激活，向线上请求激活参数
-        this.need_active && this.reActive()
-        return
-      }
-    }
-    if (value.slice(0, 2) == "a0") {
-      if (value.slice(0, 4) == "a0fa" && value.slice(32, 34) != '01') {
-        //响应aafa开门指令，但是执行结果不为成功，则释放锁定
-        this._releaseBlock()
+      if (sub_cmd == "fa" && value.slice(32, 34) == "01") {
+        this.block_by_open_door_command && this.connect_callback('open_success')
       }
       if (value.slice(32, 34) == "ea") {
         // 设备未激活，向线上请求激活参数
@@ -695,31 +690,24 @@ class BlueV4Adapter {
         return
       }
     }
-    if (value.slice(0, 2) == "b5") {
+
+    if (cmd == "b5") {
       // 20包一删除，回复B5
       this.writeBle(this._hex2ab(value))
     }
-    if (value.slice(0, 2) == "9b" && value.slice(16, 28) != 'ffffffffffff') {
+    if (cmd == "9b" && value.slice(16, 28) != 'ffffffffffff') {
       // 判断是不是物理电机关闭
       if (value.slice(16, 28) == '010100000007') {
         this._releaseBlock()
       }
-      if (value.slice(16, 28) == "010100000006") {
-        // 电机开启
-        this.block_by_open_door_command && this.connect_callback('open_success')
-      }
     }
-    if (value.slice(0, 2) == "a5" && value.slice(16, 28) != 'ffffffffffff') {
+    if (cmd == "a5" && value.slice(16, 28) != 'ffffffffffff') {
       let a5_id = value.slice(2, 8)
       let buffer = "F5" + this.param_id + a5_id
       this.writeBle(this._hex2ab(buffer))
       // 判断是不是物理电机关闭
       if (value.slice(16, 28) == '010100000007') {
         this._releaseBlock()
-      }
-      if (value.slice(16, 28) == "010100000006") {
-        // 电机开启
-        this.block_by_open_door_command && this.connect_callback('open_success')
       }
     }
     this._send_buffer()
